@@ -42,11 +42,13 @@ float lastLat = 0;
 float lastLon = 0;
 float lastAlt = 0;
 
+HTTPClient http;
+
 void sendToFirebase(float lat, float lon, float alt, String temp, String press, String accel, String gyro, String status) {
   if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
     http.begin(firebase_url);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("Connection", "keep-alive"); // Request connection reuse
 
     String json = "{\"lat\":" + String(lat, 6) + 
                   ", \"lon\":" + String(lon, 6) + 
@@ -62,11 +64,11 @@ void sendToFirebase(float lat, float lon, float alt, String temp, String press, 
     int httpResponseCode = http.PATCH(json);
 
     if (httpResponseCode > 0) {
-      Serial.print("Firebase Update Response: ");
+      Serial.print("FB Update: ");
       Serial.println(httpResponseCode);
     } else {
-      Serial.print("Error on sending PATCH: ");
-      Serial.println(httpResponseCode);
+      Serial.print("FB Error: ");
+      Serial.println(http.errorToString(httpResponseCode).c_str());
     }
     http.end();
   }

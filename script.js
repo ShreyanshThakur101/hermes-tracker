@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
     getDatabase,
     ref,
-    set,
+    update,
     onValue
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -89,15 +89,17 @@ function sendToFirebase(lat, lon, alt) {
 
     const now = new Date();
 
-    set(ref(db, "gps"), {
+    const gpsData = {
         lat: lat,
         lon: lon,
         alt: alt,
         readableTime: now.toLocaleTimeString(),
         timestamp: Date.now()
-    })
+    };
+
+    update(ref(db, "gps"), gpsData)
     .then(() => {
-        console.log("GPS uploaded");
+        console.log("GPS merged successfully");
     })
     .catch((error) => {
         console.error("Firebase update failed:", error);
