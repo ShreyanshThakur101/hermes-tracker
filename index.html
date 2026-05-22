@@ -14,7 +14,9 @@
         </header>
 
         <main>
+            <!-- GPS Section -->
             <div class="display-box">
+                <div class="section-title">GPS TELEMETRY</div>
                 <div class="data-point">
                     <span class="label">Latitude</span>
                     <span id="lat" class="value">-</span>
@@ -33,7 +35,38 @@
                 </div>
             </div>
 
-            <button id="startBtn">START GPS</button>
+            <!-- Sensor Section -->
+            <div class="display-box sensor-box">
+                <div class="section-title">HARDWARE SENSORS</div>
+                <div class="grid-display">
+                    <div class="data-point">
+                        <span class="label">Temp</span>
+                        <span id="temp" class="value">-</span>
+                    </div>
+                    <div class="data-point">
+                        <span class="label">Pressure</span>
+                        <span id="press" class="value">-</span>
+                    </div>
+                </div>
+                <div class="grid-display">
+                    <div class="data-point">
+                        <span class="label">Accel X/Y/Z</span>
+                        <span id="accel" class="value">-</span>
+                    </div>
+                </div>
+                <div class="grid-display">
+                    <div class="data-point">
+                        <span class="label">Gyro X/Y/Z</span>
+                        <span id="gyro" class="value">-</span>
+                    </div>
+                </div>
+                <div class="data-point">
+                    <span class="label">Flight Status</span>
+                    <span id="flightStatus" class="value">-</span>
+                </div>
+            </div>
+
+            <button id="startBtn" style="display: none;">START GPS</button>
         </main>
     </div>
 

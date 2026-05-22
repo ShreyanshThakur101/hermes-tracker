@@ -59,12 +59,33 @@ h1 {
 .status-active { color: var(--success-color); }
 .status-denied { color: var(--error-color); }
 
+.section-title {
+    color: var(--muted-text);
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+}
+
 .display-box {
     background: #000;
     padding: 20px;
     border-radius: 8px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     border-left: 3px solid var(--accent-color);
+}
+
+.sensor-box {
+    border-left-color: var(--success-color);
+}
+
+.grid-display {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .data-point {

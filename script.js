@@ -2,7 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import {
     getDatabase,
     ref,
-    set
+    set,
+    onValue
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 import { firebaseConfig } from "./firebase-config.js";
@@ -19,8 +20,41 @@ const lonEl = document.getElementById("lon");
 const altEl = document.getElementById("alt");
 const timeEl = document.getElementById("time");
 
+const tempEl = document.getElementById("temp");
+const pressEl = document.getElementById("press");
+const accelEl = document.getElementById("accel");
+const gyroEl = document.getElementById("gyro");
+const statusDataEl = document.getElementById("flightStatus");
+
+// Check for tracker mode in URL (?mode=track)
+const urlParams = new URLSearchParams(window.location.search);
+const isTracker = urlParams.get('mode') === 'track';
+
+if (isTracker) {
+    startBtn.style.display = "block";
+    updateStatus("Tracker Mode Ready");
+} else {
+    updateStatus("Waiting for Data...");
+}
+
+// Update UI elements with data
+function updateUI(data) {
+    if (typeof data.lat === 'number') latEl.textContent = data.lat.toFixed(6);
+    if (typeof data.lon === 'number') lonEl.textContent = data.lon.toFixed(6);
+    if (typeof data.alt === 'number') altEl.textContent = data.alt.toFixed(2) + " m";
+    if (data.readableTime) timeEl.textContent = data.readableTime;
+
+    // Hardware Sensors
+    if (data.temp) tempEl.textContent = data.temp + " C";
+    if (data.press) pressEl.textContent = data.press + " hPa";
+    if (data.accel) accelEl.textContent = data.accel;
+    if (data.gyro) gyroEl.textContent = data.gyro;
+    if (data.status) statusDataEl.textContent = data.status;
+}
+
 // Update status text
 function updateStatus(state) {
+    if (!statusEl) return;
     statusEl.textContent = state;
     statusEl.className = "";
 
@@ -32,6 +66,16 @@ function updateStatus(state) {
         statusEl.classList.add("status-waiting");
     }
 }
+
+// Listen for live updates from Firebase
+const gpsRef = ref(db, "gps");
+onValue(gpsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+        updateUI(data);
+        updateStatus("GPS Active");
+    }
+});
 
 // Send GPS data to Firebase
 function sendToFirebase(lat, lon, alt) {
@@ -75,18 +119,7 @@ function startTracking() {
             const longitude = position.coords.longitude;
             const altitude = position.coords.altitude || 0;
 
-            const currentTime =
-                new Date(position.timestamp).toLocaleTimeString();
-
-            // Update UI
-            latEl.textContent = latitude.toFixed(6);
-            lonEl.textContent = longitude.toFixed(6);
-            altEl.textContent = altitude.toFixed(2) + " m";
-            timeEl.textContent = currentTime;
-
-            updateStatus("GPS Active");
-
-            // Send to Firebase
+            // Send to Firebase (UI will be updated by the listener)
             sendToFirebase(
                 latitude,
                 longitude,
