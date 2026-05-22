@@ -39,6 +39,7 @@ if (isTracker) {
 
 // Update UI elements with data
 function updateUI(data) {
+    console.log("updateUI called with data:", data);
     if (typeof data.lat === 'number') latEl.textContent = data.lat.toFixed(6);
     if (typeof data.lon === 'number') lonEl.textContent = data.lon.toFixed(6);
     if (typeof data.alt === 'number') altEl.textContent = data.alt.toFixed(2) + " m";
@@ -68,13 +69,19 @@ function updateStatus(state) {
 }
 
 // Listen for live updates from Firebase
+console.log("Setting up Firebase listener...");
 const gpsRef = ref(db, "gps");
 onValue(gpsRef, (snapshot) => {
     const data = snapshot.val();
+    console.log("Firebase REAL-TIME update received:", data);
     if (data) {
         updateUI(data);
         updateStatus("GPS Active");
+    } else {
+        console.warn("No data found at 'gps' node in Firebase");
     }
+}, (error) => {
+    console.error("Firebase listener error:", error);
 });
 
 // Send GPS data to Firebase
