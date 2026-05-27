@@ -67,8 +67,7 @@
         });
         const marker = L.marker([0, 0], { icon: customMarker }).addTo(map);
 
-        let lastStatus = "NORMAL";
-        let isProcessingProtocol = false;
+        let currentActiveProtocol = null;
 
         async function updateDashboard() {
             try {
@@ -89,25 +88,32 @@
                 const text = document.getElementById('v-status');
                 const pcViz = document.getElementById('precrash-viz');
                 const syncViz = document.getElementById('sync-viz');
+                const animBlock = document.getElementById('viewer-animation-block');
                 
                 text.textContent = status === "NORMAL" ? "STABLE" : status;
                 card.className = "status-flag-box"; // reset
                 
-                // Trigger Protocol on Status Change
-                if (status !== lastStatus) {
-                    if ((status === "PRECRASH" || status === "CRASH") && !isProcessingProtocol) {
-                        isProcessingProtocol = true;
+                // Protocol Detection & Alerting
+                if (status === "PRECRASH" || status === "CRASH") {
+                    if (currentActiveProtocol !== status) {
+                        currentActiveProtocol = status;
+                        
+                        // Activate Animations
+                        animBlock.classList.add('status-active');
                         pcViz.classList.add('protocol-active');
                         syncViz.classList.add('protocol-active');
 
+                        // 5s Shutdown Sequence
                         setTimeout(() => {
                             pcViz.classList.remove('protocol-active');
                             syncViz.classList.remove('protocol-active');
+                            animBlock.classList.remove('status-active');
                             alert("Data sent successfully");
-                            isProcessingProtocol = false;
                         }, 5000);
                     }
-                    lastStatus = status;
+                } else {
+                    // Reset to allow re-triggering when status returns to NORMAL
+                    currentActiveProtocol = null;
                 }
 
                 if (status === "PRECRASH") {
