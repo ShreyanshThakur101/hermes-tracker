@@ -3,143 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HERMES | Transmitter Admin</title>
-    <style>
-        :root {
-            --bg: #050505;
-            --panel: #111;
-            --accent: #00ff41;
-            --warn: #ffaa00;
-            --danger: #ff0033;
-            --text: #eee;
-        }
-        * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        .header { border-bottom: 1px solid #222; padding-bottom: 10px; margin-bottom: 20px; }
-        .header h1 { font-size: 0.9rem; letter-spacing: 2px; color: var(--accent); margin: 0; }
-
-        .pipeline-status { display: flex; justify-content: space-between; align-items: center; background: var(--panel); padding: 15px; border: 1px solid #222; margin-bottom: 20px; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #333; }
-        .active .status-dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-
-        .telemetry-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; flex-grow: 1; }
-        .tile { background: var(--panel); border: 1px solid #222; padding: 10px; }
-        .tile-label { font-size: 0.6rem; color: #666; text-transform: uppercase; }
-        .tile-value { font-size: 1rem; margin-top: 5px; }
-
-        .controls { display: grid; gap: 15px; }
-        .btn { padding: 18px; border: 1px solid #333; background: #1a1a1a; color: white; text-transform: uppercase; font-size: 0.75rem; cursor: pointer; }
-        .btn-active { background: var(--accent); color: #000; border-color: #fff; }
-        .btn-warn:active { background: var(--warn); color: #000; }
-        .btn-danger:active { background: var(--danger); color: #000; }
-
-        /* Lockdown Styles */
-        body.crash-lockdown { background: #660000 !important; }
-        body.crash-lockdown .header, body.crash-lockdown .pipeline-status, body.crash-lockdown .controls, body.crash-lockdown .tile-label { display: none; }
-        body.crash-lockdown .telemetry-preview { grid-template-columns: 1fr; align-items: center; justify-content: center; text-align: center; }
-        body.crash-lockdown .tile { background: transparent; border: none; }
-        body.crash-lockdown .tile-value { font-size: 3.5rem; font-weight: bold; }
-        body.crash-lockdown .gps-only { display: block !important; }
-        .gps-only { display: none; }
-    </style>
+    <title>HERMES | Transmitter Controller</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="header">
-        <h1>HERMES TRANSMITTER CONTROL</h1>
-    </div>
+    <div class="admin-wrapper">
+        <header style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 0.9rem; color: var(--hermes-cyan); margin: 0; letter-spacing: 2px;">HERMES TRANSMITTER</h1>
+        </header>
 
-    <div id="pipeline-card" class="pipeline-status">
-        <span>PIPELINE_STATUS: <span id="status-text">IDLE</span></span>
-        <div class="status-dot"></div>
-    </div>
+        <main class="telemetry-readouts">
+            <div class="metric-tile"><div class="metric-label">Latitude</div><div id="ph-lat" class="metric-value">---</div></div>
+            <div class="metric-tile"><div class="metric-label">Longitude</div><div id="ph-lon" class="metric-value">---</div></div>
+            <div class="metric-tile"><div class="metric-label">Altitude</div><div id="ph-alt" class="metric-value">---</div></div>
+        </main>
 
-    <div class="telemetry-preview">
-        <div class="tile">
-            <span class="tile-label">Lat</span>
-            <div id="t-lat" class="tile-value">---</div>
-        </div>
-        <div class="tile">
-            <span class="tile-label">Lon</span>
-            <div id="t-lon" class="tile-value">---</div>
-        </div>
-        <div class="tile">
-            <span class="tile-label">Alt</span>
-            <div id="t-alt" class="tile-value">---</div>
-        </div>
-        <div class="tile">
-            <span class="tile-label">Temp</span>
-            <div id="t-temp" class="tile-value">---</div>
-        </div>
-    </div>
+        <section class="btn-group">
+            <button id="beaconBtn" class="hermes-btn btn-primary">Initiate Beacon</button>
+            <button id="preCrashBtn" class="hermes-btn btn-warn">Run Pre-Crash Protocol</button>
+            <button id="crashBtn" class="hermes-btn btn-danger">Run Crash Protocol</button>
+        </section>
 
-    <div class="controls">
-        <button id="tx-toggle" class="btn">Activate Transmitter Pipeline</button>
-        <button id="precrash-btn" class="btn btn-warn">Run Pre-Crash Protocol</button>
-        <button id="crash-btn" class="btn btn-danger">Run Crash Protocol</button>
+        <!-- Protocol Animations -->
+        <div id="precrash-viz" class="protocol-stage">
+            <div class="svg-pipeline">
+                <svg viewBox="0 0 24 24" class="svg-icon flashing-sd"><path d="M18 2H10L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 8H7V4h2v4zm4 0h-2V4h2v4zm4 0h-2V4h2v4z"/></svg>
+                <svg viewBox="0 0 24 24" class="svg-icon flashing-sd"><path d="M18 2H10L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 8H7V4h2v4zm4 0h-2V4h2v4zm4 0h-2V4h2v4z"/></svg>
+            </div>
+            <div class="anim-banner">UPLOADING DATA TO SD CARDS</div>
+        </div>
+
+        <div id="sync-viz" class="protocol-stage">
+            <svg viewBox="0 0 24 24" class="svg-icon" style="width: 50px; height: 50px;"><path d="M20 13H4c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-3c0-1.1-.9-2-2-2zm-1 4h-2v-1h2v1zm-4 0h-2v-1h2v1zm5-13H4c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-1 4h-2V7h2v1zm-4 0h-2V7h2v1z"/></svg>
+            <div class="anim-banner">UPDATING DATA FROM SD TO DB</div>
+        </div>
     </div>
 
     <script>
         const DB_URL = "https://hermes-5aea5-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
-        let state = {
-            txActive: false,
-            lat: 0, lon: 0, alt: 0,
-            status: "NORMAL"
+        let state = { lat: 0, lon: 0, alt: 0, status: "NORMAL", active: false };
+        let txInterval = null;
+
+        // High-Speed GPS Caching
+        navigator.geolocation.watchPosition(
+            (pos) => {
+                state.lat = pos.coords.latitude;
+                state.lon = pos.coords.longitude;
+                state.alt = pos.coords.altitude || 0;
+                document.getElementById('ph-lat').textContent = state.lat.toFixed(6);
+                document.getElementById('ph-lon').textContent = state.lon.toFixed(6);
+                document.getElementById('ph-alt').textContent = state.alt.toFixed(1) + " m";
+            },
+            null, { enableHighAccuracy: true, maximumAge: 0, timeout: 1000 }
+        );
+
+        const beaconBtn = document.getElementById('beaconBtn');
+        beaconBtn.onclick = () => {
+            state.active = !state.active;
+            beaconBtn.classList.toggle('active');
+            beaconBtn.textContent = state.active ? "Terminate Beacon" : "Initiate Beacon";
+            if (state.active) {
+                txInterval = setInterval(transmit, 500);
+                document.getElementById('sync-viz').classList.add('protocol-active');
+            } else {
+                clearInterval(txInterval);
+                document.getElementById('sync-viz').classList.remove('protocol-active');
+            }
         };
 
-        // Geolocation Watch
-        navigator.geolocation.watchPosition(pos => {
-            state.lat = pos.coords.latitude;
-            state.lon = pos.coords.longitude;
-            state.alt = pos.coords.altitude || 0;
-            updateUI();
-        }, null, { enableHighAccuracy: true });
-
-        // Toggle Pipeline
-        const txBtn = document.getElementById('tx-toggle');
-        txBtn.onclick = () => {
-            state.txActive = !state.txActive;
-            txBtn.classList.toggle('btn-active');
-            txBtn.textContent = state.txActive ? "Pipeline Active" : "Activate Transmitter Pipeline";
-            document.getElementById('pipeline-card').classList.toggle('active');
-            document.getElementById('status-text').textContent = state.txActive ? "STREAMING" : "IDLE";
+        document.getElementById('preCrashBtn').onclick = () => {
+            state.status = "PRECRASH";
+            document.getElementById('precrash-viz').classList.add('protocol-active');
+            transmit();
         };
 
-        // Protocol Triggers
-        document.getElementById('precrash-btn').onclick = () => { state.status = "PRECRASH"; };
-        document.getElementById('crash-btn').onclick = () => { 
-            state.status = "CRASH"; 
-            document.body.classList.add('crash-lockdown');
+        document.getElementById('crashBtn').onclick = () => {
+            state.status = "CRASH";
+            document.body.classList.add('lockdown-red');
+            transmit();
+            if (!state.active) txInterval = setInterval(transmit, 500);
         };
 
-        // Simulated Sensors & Data Pipeline
-        setInterval(() => {
-            if (!state.txActive) return;
-
+        async function transmit() {
             const payload = {
-                lat: state.lat,
-                lon: state.lon,
-                alt: state.alt,
-                temp: (24 + Math.random() * 2).toFixed(1) + "C",
-                press: (1012 + Math.random() * 5).toFixed(1) + "hPa",
-                gyro: `${(Math.random()*10).toFixed(2)},${(Math.random()*10).toFixed(2)},${(Math.random()*10).toFixed(2)}`,
-                accel: `${(Math.random()*2).toFixed(2)},${(Math.random()*2).toFixed(2)},${(Math.random()*2).toFixed(2)}`,
-                status: state.status,
-                timestamp: Date.now()
+                lat: state.lat, lon: state.lon, alt: state.alt,
+                status: state.status, timestamp: Date.now(),
+                temp: (24 + Math.random() * 2).toFixed(1),
+                press: (1013 + Math.random() * 5).toFixed(1),
+                accel: `${(Math.random()).toFixed(2)}, ${(Math.random()).toFixed(2)}, 9.81`,
+                gyro: `${(Math.random()).toFixed(2)}, ${(Math.random()).toFixed(2)}, ${(Math.random()).toFixed(2)}`
             };
-
-            document.getElementById('t-temp').textContent = payload.temp;
-
-            fetch(DB_URL, {
-                method: 'PATCH',
-                body: JSON.stringify(payload)
-            }).catch(e => console.error("Sync Error", e));
-        }, 1000);
-
-        function updateUI() {
-            document.getElementById('t-lat').textContent = state.lat.toFixed(6);
-            document.getElementById('t-lon').textContent = state.lon.toFixed(6);
-            document.getElementById('t-alt').textContent = state.alt.toFixed(1) + "m";
+            try {
+                await fetch(DB_URL, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (e) { console.error("TX_FAIL", e); }
         }
     </script>
 </body>

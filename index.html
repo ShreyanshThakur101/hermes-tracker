@@ -4,127 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HERMES | Ground Station Dashboard</title>
-    <style>
-        :root {
-            --bg: #0a0a0a;
-            --panel: #141414;
-            --border: #222;
-            --accent: #00ff41;
-            --warn: #ffaa00;
-            --danger: #ff0033;
-            --text: #e0e0e0;
-        }
-        * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body { background: var(--bg); color: var(--text); margin: 0; padding: 25px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        #dashboard-container { border: 4px solid var(--border); height: 100%; display: flex; flex-direction: column; transition: all 0.3s ease; }
-        
-        .header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 1rem; letter-spacing: 4px; color: var(--accent); margin: 0; }
-        .sync-tag { font-size: 0.7rem; color: #555; }
-
-        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--border); flex-grow: 1; }
-        .metric-tile { background: var(--panel); padding: 25px; display: flex; flex-direction: column; justify-content: center; }
-        .label { font-size: 0.7rem; color: #666; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
-        .value { font-size: 1.8rem; color: #fff; }
-
-        /* Status States */
-        .status-precrash { border-color: var(--warn) !important; animation: border-flash-warn 1s infinite; }
-        .status-crash { border-color: var(--danger) !important; animation: border-flash-danger 0.5s infinite; }
-
-        @keyframes border-flash-warn { 0%, 100% { box-shadow: inset 0 0 20px rgba(255,170,0,0.1); } 50% { box-shadow: inset 0 0 50px rgba(255,170,0,0.3); } }
-        @keyframes border-flash-danger { 0%, 100% { background: rgba(255,0,51,0.1); } 50% { background: rgba(255,0,51,0.3); } }
-
-        @media (max-width: 1024px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head>
 <body>
-    <div id="dashboard-container">
-        <header class="header">
-            <h1>HERMES STRATEGIC GROUND STATION</h1>
-            <div id="sync-time" class="sync-tag">LAST_SYNC: NEVER</div>
-        </header>
+    <div class="gs-wrapper">
+        <aside class="sidebar">
+            <header style="margin-bottom: 30px;">
+                <h1 style="font-size: 1rem; color: var(--hermes-cyan); margin: 0; letter-spacing: 3px;">HERMES GS-1</h1>
+                <p style="font-size: 0.6rem; color: var(--text-muted); margin: 5px 0;">STRATEGIC_GROUND_CONTROL</p>
+            </header>
 
-        <div class="metrics-grid">
-            <div class="metric-tile">
-                <span class="label">Latitude</span>
-                <div id="v-lat" class="value">0.000000</div>
+            <div class="telemetry-stack">
+                <div class="metric-tile"><div class="metric-label">Latitude</div><div id="v-lat" class="metric-value">0.000000</div></div>
+                <div class="metric-tile"><div class="metric-label">Longitude</div><div id="v-lon" class="metric-value">0.000000</div></div>
+                <div class="metric-tile"><div class="metric-label">Altitude</div><div id="v-alt" class="metric-value">0.0 m</div></div>
+                <div class="metric-tile"><div class="metric-label">Temp / Press</div><div id="v-env" class="metric-value">-- / --</div></div>
+                <div class="metric-tile"><div class="metric-label">Accel Matrix</div><div id="v-acc" class="metric-value" style="font-size: 0.9rem;">0.0, 0.0, 0.0</div></div>
+                <div class="metric-tile"><div class="metric-label">Gyro Matrix</div><div id="v-gyro" class="metric-value" style="font-size: 0.9rem;">0.0, 0.0, 0.0</div></div>
+                <div class="metric-tile"><div class="metric-label">Sync Pulse</div><div id="v-sync" class="metric-value" style="font-size: 0.8rem;">--:--:--</div></div>
             </div>
-            <div class="metric-tile">
-                <span class="label">Longitude</span>
-                <div id="v-lon" class="value">0.000000</div>
+
+            <div id="status-card" class="status-flag-box">
+                <div class="metric-label" style="color: inherit;">System State</div>
+                <div id="v-status" style="font-size: 1.2rem; font-weight: bold; margin-top: 5px;">STABLE</div>
             </div>
-            <div class="metric-tile">
-                <span class="label">GPS Altitude</span>
-                <div id="v-alt" class="value">0.0 m</div>
-            </div>
-            <div class="metric-tile">
-                <span class="label">Temperature</span>
-                <div id="v-temp" class="value">-- C</div>
-            </div>
-            <div class="metric-tile">
-                <span class="label">Pressure</span>
-                <div id="v-press" class="value">-- hPa</div>
-            </div>
-            <div class="metric-tile">
-                <span class="label">Accelerometer</span>
-                <div id="v-accel" class="value" style="font-size: 1.1rem;">0.0, 0.0, 0.0</div>
-            </div>
-            <div class="metric-tile">
-                <span class="label">Gyroscope</span>
-                <div id="v-gyro" class="value" style="font-size: 1.1rem;">0.0, 0.0, 0.0</div>
-            </div>
-            <div class="metric-tile">
-                <span class="label">System State</span>
-                <div id="v-status" class="value" style="color: var(--accent);">STABLE</div>
-            </div>
-        </div>
+        </aside>
+
+        <main class="map-viewport">
+            <div id="map"></div>
+        </main>
     </div>
 
     <script>
         const DB_URL = "https://hermes-5aea5-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
-        const container = document.getElementById('dashboard-container');
+        
+        // Leaflet Init
+        const map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+        
+        const customMarker = L.divIcon({
+            className: 'hermes-marker',
+            html: `<div style="width:16px;height:16px;background:#00e5ff;border-radius:50%;border:2px solid white;box-shadow:0 0 15px #00e5ff;"></div>`,
+            iconSize: [16, 16], iconAnchor: [8, 8]
+        });
+        const marker = L.marker([0, 0], { icon: customMarker }).addTo(map);
 
-        async function poll() {
+        async function updateDashboard() {
             try {
                 const res = await fetch(DB_URL);
                 const data = await res.json();
                 if (!data) return;
 
-                // Update Values
                 document.getElementById('v-lat').textContent = parseFloat(data.lat || 0).toFixed(6);
                 document.getElementById('v-lon').textContent = parseFloat(data.lon || 0).toFixed(6);
                 document.getElementById('v-alt').textContent = parseFloat(data.alt || 0).toFixed(1) + " m";
-                document.getElementById('v-temp').textContent = data.temp || "-- C";
-                document.getElementById('v-press').textContent = data.press || "-- hPa";
-                document.getElementById('v-accel').textContent = data.accel || "0, 0, 0";
+                document.getElementById('v-env').textContent = `${data.temp || '--'}C / ${data.press || '--'}hPa`;
+                document.getElementById('v-acc').textContent = data.accel || "0, 0, 0";
                 document.getElementById('v-gyro').textContent = data.gyro || "0, 0, 0";
-                
+                document.getElementById('v-sync').textContent = new Date(data.timestamp || Date.now()).toLocaleTimeString();
+
                 const status = (data.status || "NORMAL").toUpperCase();
-                const statusEl = document.getElementById('v-status');
-                statusEl.textContent = status === "NORMAL" ? "STABLE" : status;
+                const card = document.getElementById('status-card');
+                const text = document.getElementById('v-status');
+                
+                text.textContent = status === "NORMAL" ? "STABLE" : status;
+                card.className = "status-flag-box"; // reset
+                if (status === "PRECRASH") card.classList.add('alert-amber');
+                if (status === "CRASH") card.classList.add('alert-red');
 
-                // UI Feedback
-                container.className = '';
-                if (status === "PRECRASH") {
-                    container.classList.add('status-precrash');
-                    statusEl.style.color = "var(--warn)";
-                } else if (status === "CRASH") {
-                    container.classList.add('status-crash');
-                    statusEl.style.color = "var(--danger)";
-                } else {
-                    statusEl.style.color = "var(--accent)";
-                }
-
-                document.getElementById('sync-time').textContent = "LAST_SYNC: " + new Date(data.timestamp).toLocaleTimeString();
-
-            } catch (e) {
-                console.error("Link Failure", e);
-            }
+                const pos = [data.lat || 0, data.lon || 0];
+                marker.setLatLng(pos);
+                map.panTo(pos);
+            } catch (e) { console.error(e); }
         }
 
-        setInterval(poll, 1000);
-        poll();
+        setInterval(updateDashboard, 1000);
+        updateDashboard();
     </script>
 </body>
 </html>
