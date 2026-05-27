@@ -26,6 +26,22 @@
                 <div class="metric-tile"><div class="metric-label">Sync Pulse</div><div id="v-sync" class="metric-value" style="font-size: 0.8rem;">--:--:--</div></div>
             </div>
 
+            <div id="viewer-animation-block" style="margin-top: 20px;">
+                <!-- Protocol Animations -->
+                <div id="precrash-viz" class="protocol-stage">
+                    <div class="svg-pipeline">
+                        <svg viewBox="0 0 24 24" class="svg-icon flashing-sd"><path d="M18 2H10L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 8H7V4h2v4zm4 0h-2V4h2v4zm4 0h-2V4h2v4z"/></svg>
+                        <svg viewBox="0 0 24 24" class="svg-icon flashing-sd"><path d="M18 2H10L4 8v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM9 8H7V4h2v4zm4 0h-2V4h2v4zm4 0h-2V4h2v4z"/></svg>
+                    </div>
+                    <div class="anim-banner">UPLOADING DATA TO SD CARDS</div>
+                </div>
+
+                <div id="sync-viz" class="protocol-stage">
+                    <svg viewBox="0 0 24 24" class="svg-icon" style="width: 50px; height: 50px;"><path d="M20 13H4c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-3c0-1.1-.9-2-2-2zm-1 4h-2v-1h2v1zm-4 0h-2v-1h2v1zm5-13H4c-1.1 0-2 .9-2 2v3c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-1 4h-2V7h2v1zm-4 0h-2V7h2v1z"/></svg>
+                    <div class="anim-banner">UPDATING DATA FROM SD TO DB</div>
+                </div>
+            </div>
+
             <div id="status-card" class="status-flag-box">
                 <div class="metric-label" style="color: inherit;">System State</div>
                 <div id="v-status" style="font-size: 1.2rem; font-weight: bold; margin-top: 5px;">STABLE</div>
@@ -68,11 +84,21 @@
                 const status = (data.status || "NORMAL").toUpperCase();
                 const card = document.getElementById('status-card');
                 const text = document.getElementById('v-status');
+                const pcViz = document.getElementById('precrash-viz');
+                const syncViz = document.getElementById('sync-viz');
                 
                 text.textContent = status === "NORMAL" ? "STABLE" : status;
                 card.className = "status-flag-box"; // reset
-                if (status === "PRECRASH") card.classList.add('alert-amber');
-                if (status === "CRASH") card.classList.add('alert-red');
+                
+                // Toggle animations
+                pcViz.classList.toggle('protocol-active', status === "PRECRASH");
+                syncViz.classList.toggle('protocol-active', status === "PRECRASH" || (Date.now() - data.timestamp < 3000));
+
+                if (status === "PRECRASH") {
+                    card.classList.add('alert-amber');
+                } else if (status === "CRASH") {
+                    card.classList.add('alert-red');
+                }
 
                 const pos = [data.lat || 0, data.lon || 0];
                 marker.setLatLng(pos);
