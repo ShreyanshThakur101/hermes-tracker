@@ -67,8 +67,8 @@
         });
         const marker = L.marker([0, 0], { icon: customMarker }).addTo(map);
 
-        let protocolActive = false;
-        let protocolTimer = null;
+        let lastStatus = "NORMAL";
+        let isProcessingProtocol = false;
 
         async function updateDashboard() {
             try {
@@ -93,21 +93,21 @@
                 text.textContent = status === "NORMAL" ? "STABLE" : status;
                 card.className = "status-flag-box"; // reset
                 
-                // Protocol Logic
-                if ((status === "PRECRASH" || status === "CRASH") && !protocolActive) {
-                    protocolActive = true;
-                    pcViz.classList.add('protocol-active');
-                    syncViz.classList.add('protocol-active');
+                // Trigger Protocol on Status Change
+                if (status !== lastStatus) {
+                    if ((status === "PRECRASH" || status === "CRASH") && !isProcessingProtocol) {
+                        isProcessingProtocol = true;
+                        pcViz.classList.add('protocol-active');
+                        syncViz.classList.add('protocol-active');
 
-                    // Start 5s timer
-                    if (protocolTimer) clearTimeout(protocolTimer);
-                    protocolTimer = setTimeout(() => {
-                        pcViz.classList.remove('protocol-active');
-                        syncViz.classList.remove('protocol-active');
-                        alert("Data sent successfully");
-                        // Reset flag after alert
-                        protocolActive = false;
-                    }, 5000);
+                        setTimeout(() => {
+                            pcViz.classList.remove('protocol-active');
+                            syncViz.classList.remove('protocol-active');
+                            alert("Data sent successfully");
+                            isProcessingProtocol = false;
+                        }, 5000);
+                    }
+                    lastStatus = status;
                 }
 
                 if (status === "PRECRASH") {
