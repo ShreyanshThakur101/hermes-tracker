@@ -1,0 +1,39 @@
+HERMES TRACKER - PROJECT FEATURES & TECH STACK
+
+1. CORE SYSTEM ARCHITECTURE
+   - Real-time GPS tracking system with dual-platform support (Web & Hardware).
+     > Tech Stack: Firebase Realtime Database, JavaScript (ES6+), C++ (Arduino/ESP32).
+   - Instant data synchronization using Firebase Realtime Database.
+     > Tech Stack: Firebase SDK (App, Database), JSON.
+   - Long-range data transmission capability via LoRa (433MHz).
+     > Tech Stack: LoRa.h Library, Semtech SX127x/SX126x modules.
+
+2. WEB APPLICATION FEATURES
+   - Dual-Mode Interface (Tracker/Viewer).
+     > Tech Stack: HTML5, CSS3 (Flexbox/Grid), JavaScript (URLSearchParams API).
+   - Live Telemetry Dashboard (GPS & Sensor Data).
+     > Tech Stack: Firebase onValue listeners, DOM Manipulation.
+   - Cross-Platform Compatibility.
+     > Tech Stack: Responsive Web Design (CSS Viewport units, Media Queries).
+   - Modern Web Module Support.
+     > Tech Stack: JavaScript Modules (type="module"), CDN-hosted Firebase SDK.
+
+3. HARDWARE RECEIVER (ESP32C3) FEATURES
+   - Microcontroller Platform.
+     > Tech Stack: ESP32-C3 (RISC-V), Arduino Framework.
+   - Visual Feedback & UI.
+     > Tech Stack: Adafruit_ST7735, Adafruit_GFX Libraries.
+   - Networking & Cloud Bridge.
+     > Tech Stack: WiFi.h, HTTPClient.h (REST API PATCH requests).
+   - Sensor Data Parsing.
+     > Tech Stack: C++ String manipulation, Custom CSV parser.
+   - Hardware Interaction.
+     > Tech Stack: GPIO interrupts (DigitalRead), PWM (Buzzer control).
+
+4. DEPLOYMENT & INFRASTRUCTURE
+   - Web Hosting.
+     > Tech Stack: Vercel Cloud Platform.
+   - Database & Backend.
+     > Tech Stack: Firebase Realtime Database (NoSQL).
+   - Version Control.
+     > Tech Stack: Git.

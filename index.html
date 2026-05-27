@@ -2,75 +2,359 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HERMES TRACKER</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HERMES | Strategic Telemetry System</title>
+    
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: rgba(15, 15, 15, 0.9);
+            --accent-green: #00ff41;
+            --accent-orange: #ffaa00;
+            --accent-red: #ff0000;
+            --text-primary: #f0f0f0;
+            --text-secondary: #777;
+            --border-color: #222;
+        }
+
+        * { box-sizing: border-box; }
+        body, html { 
+            margin: 0; padding: 0; height: 100%; width: 100%; 
+            background: var(--bg-color); color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+        }
+
+        /* Mode Management */
+        #viewer-ui, #tracker-ui { display: none; height: 100%; width: 100%; }
+        body.mode-viewer #viewer-ui { display: flex; }
+        body.mode-tracker #tracker-ui { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        /* --- VIEWER UI --- */
+        .sidebar {
+            width: 380px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+            padding: 25px;
+            overflow-y: auto;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+            margin: 0 0 30px 0;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .telemetry-grid { display: grid; gap: 20px; }
+        
+        .card {
+            background: rgba(30, 30, 30, 0.3);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .card-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .status-box {
+            margin-top: 10px;
+            padding: 20px;
+            text-align: center;
+            font-weight: bold;
+            border-width: 2px;
+            border-style: solid;
+        }
+
+        .status-normal { border-color: var(--accent-green); color: var(--accent-green); }
+        .status-precrash { 
+            border-color: var(--accent-orange); color: var(--accent-orange);
+            animation: flash-orange 1.5s infinite;
+        }
+        .status-crash { 
+            border-color: var(--accent-red); color: var(--accent-red);
+            animation: flash-red 0.6s infinite;
+        }
+
+        @keyframes flash-orange {
+            0%, 100% { background: rgba(255, 170, 0, 0.05); }
+            50% { background: rgba(255, 170, 0, 0.2); }
+        }
+        @keyframes flash-red {
+            0%, 100% { background: rgba(255, 0, 0, 0.05); }
+            50% { background: rgba(255, 0, 0, 0.3); }
+        }
+
+        .map-area { flex-grow: 1; position: relative; }
+        #map { height: 100%; width: 100%; background: #000; }
+
+        /* --- TRACKER UI --- */
+        .beacon-btn {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 4px solid #333;
+            background: #111;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1.8rem;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .beacon-btn.active {
+            background: var(--accent-green);
+            color: #000;
+            border-color: #fff;
+            box-shadow: 0 0 50px var(--accent-green);
+            transform: scale(1.05);
+        }
+
+        .beacon-label { font-size: 0.7rem; margin-top: 10px; letter-spacing: 2px; }
+        
+        .tracker-info {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.6;
+        }
+
+        /* Map Marker Customization */
+        .pulse-marker {
+            width: 14px; height: 14px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 10px var(--accent-green);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: 40%; position: absolute; bottom: 0; border-right: none; border-top: 1px solid var(--border-color); }
+            body.mode-viewer #viewer-ui { flex-direction: column; }
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>HERMES TRACKER</h1>
-            <div id="status" class="status-waiting">Waiting for GPS</div>
-        </header>
+<body class="mode-viewer">
 
-        <main>
-            <!-- GPS Section -->
-            <div class="display-box">
-                <div class="section-title">GPS TELEMETRY</div>
-                <div class="data-point">
-                    <span class="label">Latitude</span>
-                    <span id="lat" class="value">-</span>
+    <!-- VIEWER MODE -->
+    <div id="viewer-ui">
+        <aside class="sidebar">
+            <header class="header"><h1>HERMES TERMINAL</h1></header>
+            <div class="telemetry-grid">
+                <div class="card">
+                    <div class="card-label">Latitude</div>
+                    <div id="v-lat" class="card-value">0.000000</div>
                 </div>
-                <div class="data-point">
-                    <span class="label">Longitude</span>
-                    <span id="lon" class="value">-</span>
+                <div class="card">
+                    <div class="card-label">Longitude</div>
+                    <div id="v-lon" class="card-value">0.000000</div>
                 </div>
-                <div class="data-point">
-                    <span class="label">Altitude</span>
-                    <span id="alt" class="value">-</span>
+                <div class="card">
+                    <div class="card-label">Altitude</div>
+                    <div id="v-alt" class="card-value">0.0 m</div>
                 </div>
-                <div class="data-point">
-                    <span class="label">Timestamp</span>
-                    <span id="time" class="value">-</span>
+                <div class="card">
+                    <div class="card-label">Sync Latency</div>
+                    <div id="v-delay" class="card-value">0ms</div>
+                </div>
+                <div id="v-status-box" class="status-box status-normal">
+                    <div class="card-label" style="color: inherit;">System Integrity</div>
+                    <div id="v-status" class="card-value" style="font-weight: 700;">NORMAL</div>
                 </div>
             </div>
-
-            <!-- Sensor Section -->
-            <div class="display-box sensor-box">
-                <div class="section-title">HARDWARE SENSORS</div>
-                <div class="grid-display">
-                    <div class="data-point">
-                        <span class="label">Temp</span>
-                        <span id="temp" class="value">-</span>
-                    </div>
-                    <div class="data-point">
-                        <span class="label">Pressure</span>
-                        <span id="press" class="value">-</span>
-                    </div>
-                </div>
-                <div class="grid-display">
-                    <div class="data-point">
-                        <span class="label">Accel X/Y/Z</span>
-                        <span id="accel" class="value">-</span>
-                    </div>
-                </div>
-                <div class="grid-display">
-                    <div class="data-point">
-                        <span class="label">Gyro X/Y/Z</span>
-                        <span id="gyro" class="value">-</span>
-                    </div>
-                </div>
-                <div class="data-point">
-                    <span class="label">Flight Status</span>
-                    <span id="flightStatus" class="value">-</span>
-                </div>
+            <div style="margin-top: auto; font-size: 0.6rem; color: #333; letter-spacing: 1px;">
+                ENCRYPTED_STREAM_ID: HERMES-V5-RTDB
             </div>
-
-            <button id="startBtn" style="display: none;">START GPS</button>
-        </main>
+        </aside>
+        <section class="map-area">
+            <div id="map"></div>
+        </section>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module" src="script.js"></script>
+    <!-- TRACKER MODE -->
+    <div id="tracker-ui">
+        <button id="beacon-toggle" class="beacon-btn">
+            <span id="btn-text">START</span>
+            <span class="beacon-label">TX BEACON</span>
+        </button>
+        <div class="tracker-info">
+            <div id="t-coords">GPS DISCONNECTED</div>
+            <div id="t-status" style="margin-top: 5px;">IDLE</div>
+        </div>
+    </div>
+
+    <!-- Logic Engine -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+        /**
+         * HERMES STRATEGIC TELEMETRY SYSTEM
+         * Target: Firebase RTDB - Asia Southeast 1
+         */
+        const FIREBASE_URL = "https://hermes-5aea5-default-rtdb.asia-southeast1.firebasedatabase.app/gps.json";
+        
+        // Mode Initialization
+        const urlParams = new URLSearchParams(window.location.search);
+        const systemMode = urlParams.get('mode') === 'tracker' ? 'tracker' : 'viewer';
+        document.body.className = `mode-${systemMode}`;
+
+        if (systemMode === 'viewer') {
+            runViewer();
+        } else {
+            runTracker();
+        }
+
+        // --- VIEWER IMPLEMENTATION ---
+        function runViewer() {
+            // Leaflet Setup
+            const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([0, 0], 2);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            const icon = L.divIcon({ className: 'pulse-marker', iconSize: [14, 14], iconAnchor: [7, 7] });
+            const marker = L.marker([0, 0], { icon }).addTo(map);
+            let firstLock = true;
+
+            async function fetchData() {
+                try {
+                    const res = await fetch(FIREBASE_URL);
+                    const data = await res.json();
+                    if (!data) return;
+
+                    // Telemetry Mapping
+                    document.getElementById('v-lat').textContent = parseFloat(data.lat).toFixed(6);
+                    document.getElementById('v-lon').textContent = parseFloat(data.lon).toFixed(6);
+                    document.getElementById('v-alt').textContent = `${parseFloat(data.alt).toFixed(1)} m`;
+                    
+                    // Delay Calc
+                    const delay = Date.now() - (data.timestamp || 0);
+                    document.getElementById('v-delay').textContent = `${delay}ms`;
+
+                    // Status Logic
+                    const statusVal = (data.status || "NORMAL").toUpperCase();
+                    const statusBox = document.getElementById('v-status-box');
+                    const statusTxt = document.getElementById('v-status');
+                    
+                    statusTxt.textContent = statusVal;
+                    statusBox.className = 'status-box'; // reset
+                    if (statusVal.includes("CRASH") && !statusVal.includes("PRE")) {
+                        statusBox.classList.add('status-crash');
+                    } else if (statusVal.includes("PRECRASH")) {
+                        statusBox.classList.add('status-precrash');
+                    } else {
+                        statusBox.classList.add('status-normal');
+                    }
+
+                    // Map Logic
+                    const coords = [data.lat, data.lon];
+                    marker.setLatLng(coords);
+                    if (firstLock) {
+                        map.setView(coords, 16);
+                        firstLock = false;
+                    } else {
+                        map.panTo(coords);
+                    }
+                } catch (e) { console.error("Telemetry Link Failure", e); }
+            }
+
+            setInterval(fetchData, 1000);
+            fetchData();
+        }
+
+        // --- TRACKER IMPLEMENTATION ---
+        function runTracker() {
+            const btn = document.getElementById('beacon-toggle');
+            const btnText = document.getElementById('btn-text');
+            const coordDisplay = document.getElementById('t-coords');
+            const statusDisplay = document.getElementById('t-status');
+            
+            let isTracking = false;
+            let watchId = null;
+
+            btn.addEventListener('click', () => {
+                if (!isTracking) {
+                    if ("geolocation" in navigator) {
+                        isTracking = true;
+                        btn.classList.add('active');
+                        btnText.textContent = "STOP";
+                        statusDisplay.textContent = "UPLINK ACTIVE";
+                        
+                        watchId = navigator.geolocation.watchPosition(
+                            async (pos) => {
+                                const payload = {
+                                    lat: pos.coords.latitude,
+                                    lon: pos.coords.longitude,
+                                    alt: pos.coords.altitude || 0,
+                                    timestamp: Date.now(),
+                                    status: "NORMAL",
+                                    accel: "0,0,0",
+                                    gyro: "0,0,0",
+                                    temp: "N/A",
+                                    press: "N/A"
+                                };
+
+                                coordDisplay.textContent = `${payload.lat.toFixed(5)}, ${payload.lon.toFixed(5)}`;
+                                
+                                try {
+                                    await fetch(FIREBASE_URL, {
+                                        method: 'PATCH',
+                                        body: JSON.stringify(payload)
+                                    });
+                                } catch (e) { statusDisplay.textContent = "UPLINK ERROR"; }
+                            },
+                            (err) => { 
+                                statusDisplay.textContent = "GPS ERROR: " + err.message;
+                                stopTracking();
+                            },
+                            { enableHighAccuracy: true, maximumAge: 0 }
+                        );
+                    } else {
+                        alert("Geolocation Unavailable");
+                    }
+                } else {
+                    stopTracking();
+                }
+            });
+
+            function stopTracking() {
+                if (watchId) navigator.geolocation.clearWatch(watchId);
+                isTracking = false;
+                btn.classList.remove('active');
+                btnText.textContent = "START";
+                statusDisplay.textContent = "IDLE";
+                coordDisplay.textContent = "GPS DISCONNECTED";
+            }
+        }
+    </script>
 </body>
 </html>
