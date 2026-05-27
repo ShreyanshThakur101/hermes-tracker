@@ -64,24 +64,38 @@
             beaconBtn.textContent = state.active ? "Terminate Beacon" : "Initiate Beacon";
             if (state.active) {
                 txInterval = setInterval(transmit, 500);
-                document.getElementById('sync-viz').classList.add('protocol-active');
             } else {
                 clearInterval(txInterval);
-                document.getElementById('sync-viz').classList.remove('protocol-active');
             }
         };
 
         document.getElementById('preCrashBtn').onclick = () => {
             state.status = "PRECRASH";
-            document.getElementById('precrash-viz').classList.add('protocol-active');
+            const pcViz = document.getElementById('precrash-viz');
+            pcViz.classList.add('protocol-active');
             transmit();
+            
+            setTimeout(() => {
+                pcViz.classList.remove('protocol-active');
+                state.status = "NORMAL";
+                transmit();
+                alert("Data sent successfully");
+            }, 5000);
         };
 
         document.getElementById('crashBtn').onclick = () => {
             state.status = "CRASH";
             document.body.classList.add('lockdown-red');
+            const syncViz = document.getElementById('sync-viz');
+            syncViz.classList.add('protocol-active');
             transmit();
+            
             if (!state.active) txInterval = setInterval(transmit, 500);
+
+            setTimeout(() => {
+                syncViz.classList.remove('protocol-active');
+                alert("Data sent successfully");
+            }, 5000);
         };
 
         async function transmit() {

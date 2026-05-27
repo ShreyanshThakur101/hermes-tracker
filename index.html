@@ -67,6 +67,9 @@
         });
         const marker = L.marker([0, 0], { icon: customMarker }).addTo(map);
 
+        let protocolActive = false;
+        let protocolTimer = null;
+
         async function updateDashboard() {
             try {
                 const res = await fetch(DB_URL);
@@ -90,9 +93,22 @@
                 text.textContent = status === "NORMAL" ? "STABLE" : status;
                 card.className = "status-flag-box"; // reset
                 
-                // Toggle animations
-                pcViz.classList.toggle('protocol-active', status === "PRECRASH");
-                syncViz.classList.toggle('protocol-active', status === "PRECRASH" || (Date.now() - data.timestamp < 3000));
+                // Protocol Logic
+                if ((status === "PRECRASH" || status === "CRASH") && !protocolActive) {
+                    protocolActive = true;
+                    pcViz.classList.add('protocol-active');
+                    syncViz.classList.add('protocol-active');
+
+                    // Start 5s timer
+                    if (protocolTimer) clearTimeout(protocolTimer);
+                    protocolTimer = setTimeout(() => {
+                        pcViz.classList.remove('protocol-active');
+                        syncViz.classList.remove('protocol-active');
+                        alert("Data sent successfully");
+                        // Reset flag after alert
+                        protocolActive = false;
+                    }, 5000);
+                }
 
                 if (status === "PRECRASH") {
                     card.classList.add('alert-amber');
